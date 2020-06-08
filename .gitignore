@@ -1,4 +1,13 @@
-.Rproj.user
+# History files
 .Rhistory
+.Rapp.history
+# Session Data files
 .RData
+# User-specific files
 .Ruserdata
+# Output files from R CMD check
+/*.Rcheck/
+# RStudio files
+.Rproj.user/
+*.Rproj
+Training.Rproj
