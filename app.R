@@ -11,7 +11,11 @@ ui <- dashboardPage(
     dashboardHeader(title = "Exploring Iris!"),
     dashboardSidebar(
         textInput("text", "Enter text:"),
-        textOutput("sample")
+        textOutput("sample"),
+        actionButton("modal", "Open Modal"),
+        textOutput("sliderText"),
+        actionButton("chartSample", "Create Chart"),
+        plotOutput("chart")
     ),
     dashboardBody(
         plotOutput("petal_width"),
@@ -30,6 +34,48 @@ ui <- dashboardPage(
 #######################################
 server <- function(input, output) {
     output$sample <- renderText(input$text)
+    
+    observeEvent(input$modal, {
+        showModal(modalDialog(
+            easyClose = TRUE,
+            title = "Number Printer",
+            sliderInput("slider", "Pick a Number", min = 1, max = 10, value = 1),
+            actionButton("ok", "OK")
+        ))
+    })
+    
+    observeEvent(input$ok, {
+        output$sliderText <- renderText(input$slider)
+        removeModal()
+    })
+    
+    observeEvent(input$chartSample, {
+        showModal(modalDialog(
+            title = "Chart Test",
+            numericInput("xValue", "X Value", value = 0, min = 0),
+            selectInput("yValue", "Y Value", c("0" = "0", "1" = "1", "2" = "2")),
+            actionButton("submitChart", "OK")
+        ))
+    })
+    
+    observeEvent(input$submitChart, {
+       xVal <- input$xValue
+       yVal <- input$yValue
+       yVal2 <- as.numeric(yVal)
+       
+       newChart <- data.frame(xVal, yVal2)
+       #simpleTable <- table(newChart$xVal)
+       #simpleTable <- table(mtcars$cyl)
+       output$chart <- renderPlot({
+           ggplot(newChart) +
+               geom_histogram(stat = "identity", aes(x=xVal, y=yVal2)) + 
+               coord_cartesian(xlim=c(0,5), ylim = c(0,2))
+           
+       })
+       removeModal()
+        
+    })
+    
     
     output$petal_width <- renderPlot({
         ggplot(iris) +
