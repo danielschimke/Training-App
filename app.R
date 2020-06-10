@@ -10,6 +10,10 @@ library(ggplot2)
 ui <- dashboardPage(
     dashboardHeader(title = "Exploring Iris!"),
     dashboardSidebar(
+        sidebarMenu(
+            menuItem("Iris", tabName = "iris", icon = icon("leaf")),
+            menuItem("Mtcars", tabName = "mtcars", icon = icon("car"))
+        ),
         textInput("text", "Enter text:"),
         textOutput("sample"),
         actionButton("modal", "Open Modal"),
@@ -18,13 +22,28 @@ ui <- dashboardPage(
         plotOutput("chart")
     ),
     dashboardBody(
-        plotOutput("petal_width"),
-        plotOutput("petal_length"),
-        plotOutput("sepal_width"),
-        plotOutput("sepal_length"),
-        tableOutput("summary_table"),
-        plotOutput("pie_by_species"),
-        plotOutput("sepal_box")
+        tabItems(
+          tabItem(tabName = "iris",
+            checkboxGroupInput("irisCheck", label = "choose",
+                               choices = unique(iris$Species),
+                          #c("setosa" = "setosa", "virginica" = "virginica", "versicolor" = "versicolor"),
+                          selected = unique(iris$Species)),
+            textOutput("test3"),
+            plotOutput("petal_width"),
+            plotOutput("petal_length"),
+            plotOutput("sepal_width"),
+            plotOutput("sepal_length"),
+            tableOutput("summary_table"),
+            plotOutput("pie_by_species"),
+            plotOutput("sepal_box") 
+          ),
+          tabItem(tabName = "mtcars",
+            plotOutput("gear"),
+            plotOutput("mpg"),
+            plotOutput("mpg_grouped")
+          )
+        ),
+
     )
 )
 
@@ -34,6 +53,7 @@ ui <- dashboardPage(
 #######################################
 server <- function(input, output) {
     output$sample <- renderText(input$text)
+    output$test3 <- renderText(input$irisCheck)
     
     observeEvent(input$modal, {
         showModal(modalDialog(
@@ -76,10 +96,15 @@ server <- function(input, output) {
         
     })
     
+    #Iris Plots
+ #   newIris <- subset(iris, Species == input$irisCheck[1])
     
     output$petal_width <- renderPlot({
-        ggplot(iris) +
-            geom_histogram(aes(x=Petal.Width, fill=Species))})
+        ggplot(subset(iris, Species %in% input$irisCheck)) + 
+       # ggplot(subset(iris, Species == input$irisCheck[1] | Species == input$irisCheck[2] | Species == input$irisCheck[3])) +
+            geom_histogram(aes(x=Petal.Width, fill=Species)) +
+            coord_cartesian(xlim=c(0,2.5), ylim = c(0,30))
+        })
     
     output$petal_length <- renderPlot({
         ggplot(iris) +
@@ -110,7 +135,23 @@ server <- function(input, output) {
             coord_polar("y", start = 0)+
             theme_void()
     })
+    
+    #Mtcars Plots
+    output$gear <- renderPlot({
+        ggplot(mtcars) +
+            geom_histogram(aes(x=gear, fill=as.factor(cyl)))
+        })
+    output$mpg <- renderPlot({
+        ggplot(mtcars) +
+            geom_histogram(aes(x=mpg, fill=as.factor(cyl)))
+    })
+    output$mpg_grouped <- renderPlot({
+        ggplot(mtcars) +
+            geom_histogram(binwidth = 5, center = 20, color = "black",
+                           aes(x=mpg, fill=as.factor(cyl)))
+    })
 }
+
 
 
 shinyApp(ui = ui, server = server)
