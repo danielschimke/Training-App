@@ -4,30 +4,59 @@ library(datasets)
 library(tidyverse)
 library(ggplot2)
 
+
 ########################################
 ###     Graphical User Interface     ###
 ########################################
 ui <- dashboardPage(
     dashboardHeader(title = "Exploring Iris!"),
     dashboardSidebar(
-        sidebarMenu(
+        sidebarMenu( id = "sidebar",
             menuItem("Iris", tabName = "iris", icon = icon("leaf")),
-            menuItem("Mtcars", tabName = "mtcars", icon = icon("car"))
+            menuItem("Mtcars", tabName = "mtcars", icon = icon("car")),
+            menuItem("PlantGrowth", tabName = "plantgrowth", icon = icon("seedling")),
+            menuItem("ToothGrowth", tabName = "toothgrowth", icon = icon("tooth"))
         ),
+        conditionalPanel(
+            condition = "input.sidebar == 'mtcars'",
+            h2("Mtcars Page"),
+
+        ),
+        conditionalPanel(
+            condition = "input.sidebar == 'iris'",
+            h2("Iris Page"),
+            actionButton("openIrisModal", "Update Iris"),
+    #        checkboxGroupInput("irisCheck", label = "choose",
+     #                   choices = unique(iris$Species),
+      #                  #c("setosa" = "setosa", "virginica" = "virginica", "versicolor" = "versicolor"),
+       #                 selected = unique(iris$Species)),
+        ),
+        conditionalPanel(
+          condition = "input.sidebar == 'plantgrowth'",
+          h2("Plant Growth Page")
+        ),
+        conditionalPanel(
+            condition = "input.sidebar == 'toothgrowth'",
+            h2("Tooth Growth Page")
+        ),
+       
         textInput("text", "Enter text:"),
         textOutput("sample"),
         actionButton("modal", "Open Modal"),
         textOutput("sliderText"),
         actionButton("chartSample", "Create Chart"),
         plotOutput("chart")
+        
+
     ),
     dashboardBody(
         tabItems(
           tabItem(tabName = "iris",
-            checkboxGroupInput("irisCheck", label = "choose",
-                               choices = unique(iris$Species),
-                          #c("setosa" = "setosa", "virginica" = "virginica", "versicolor" = "versicolor"),
-                          selected = unique(iris$Species)),
+                  
+        #    checkboxGroupInput("irisCheck", label = "choose",
+         #                      choices = unique(iris$Species),
+          #                #c("setosa" = "setosa", "virginica" = "virginica", "versicolor" = "versicolor"),
+           #               selected = unique(iris$Species)),
             textOutput("test3"),
             plotOutput("petal_width"),
             plotOutput("petal_length"),
@@ -41,6 +70,15 @@ ui <- dashboardPage(
             plotOutput("gear"),
             plotOutput("mpg"),
             plotOutput("mpg_grouped")
+          ),
+          tabItem(tabName = "plantgrowth",
+            h2("Plant Growth Page"),
+            plotOutput("weight")
+          ),
+          tabItem(tabName = "toothgrowth",
+            h2("Tooth Growth Page"),
+            plotOutput("len"),
+            plotOutput("dose")
           )
         ),
 
@@ -96,6 +134,22 @@ server <- function(input, output) {
         
     })
     
+    
+    observeEvent(input$openIrisModal, {
+        showModal(modalDialog(
+            title = "Update Graph",
+            checkboxGroupInput("irisCheck", label = "choose",
+                               choices = unique(iris$Species),
+                               #c("setosa" = "setosa", "virginica" = "virginica", "versicolor" = "versicolor"),
+                               selected = unique(iris$Species)),
+            actionButton("updateIrisSubmit", "OK")
+        ))
+    })
+
+    observeEvent(input$updateIrisSubmit, {
+        updatedIris <- input$irisCheck
+        removeModal()
+    })
     #Iris Plots
  #   newIris <- subset(iris, Species == input$irisCheck[1])
     
@@ -150,6 +204,24 @@ server <- function(input, output) {
             geom_histogram(binwidth = 5, center = 20, color = "black",
                            aes(x=mpg, fill=as.factor(cyl)))
     })
+    
+    
+    #Plant Growth Plots
+    output$weight <- renderPlot({
+        ggplot(PlantGrowth) +
+            geom_histogram(aes(x=weight, fill=group))
+    })
+    
+    #Tooth Growth Plots
+    output$len <- renderPlot({
+        ggplot(ToothGrowth) +
+            geom_histogram(aes(x=len, fill=supp))
+    })
+    output$dose <- renderPlot({
+        ggplot(ToothGrowth) +
+            geom_histogram(aes(x=dose, fill=supp))
+    })
+
 }
 
 
