@@ -24,10 +24,10 @@ ui <- dashboardPage(
     dashboardBody(
         tabItems(
           tabItem(tabName = "iris",
-            checkboxGroupInput("irisCheck", label = "choose",
-                               choices = unique(iris$Species),
-                          #c("setosa" = "setosa", "virginica" = "virginica", "versicolor" = "versicolor"),
-                          selected = unique(iris$Species)),
+            checkboxGroupInput("irisCheck", label = "Filter by Species:",
+                                choices = unique(iris$Species),
+                                selected = unique(iris$Species),
+                                inline = TRUE),
             textOutput("test3"),
             plotOutput("petal_width"),
             plotOutput("petal_length"),
@@ -97,29 +97,31 @@ server <- function(input, output) {
     })
     
     #Iris Plots
- #   newIris <- subset(iris, Species == input$irisCheck[1])
-    
+    newIris <- reactive({
+        req(input$irisCheck) 
+        iris %>% filter(Species %in% input$irisCheck)
+    })
+
     output$petal_width <- renderPlot({
-        ggplot(subset(iris, Species %in% input$irisCheck)) + 
-       # ggplot(subset(iris, Species == input$irisCheck[1] | Species == input$irisCheck[2] | Species == input$irisCheck[3])) +
+        ggplot(newIris()) + 
             geom_histogram(aes(x=Petal.Width, fill=Species)) +
             coord_cartesian(xlim=c(0,2.5), ylim = c(0,30))
         })
     
     output$petal_length <- renderPlot({
-        ggplot(iris) +
+        ggplot(newIris()) +
             geom_histogram(aes(x=Petal.Length, fill=Species))})
     
     output$sepal_width <- renderPlot({
-        ggplot(iris) +
+        ggplot(newIris()) +
             geom_histogram(aes(x=Sepal.Width, fill=Species))})
     
     output$sepal_length <- renderPlot({
-        ggplot(iris) +
+        ggplot(newIris()) +
             geom_histogram(aes(x=Sepal.Length, fill=Species))})
     
     output$summary_table <- renderTable({
-        iris %>% 
+        newIris() %>% 
             group_by(Species) %>%
             summarise(SepalLength_Mean=mean(Sepal.Length), SepalLength_StdDev=sd(Sepal.Length),
                       SepalWidth_Mean=mean(Sepal.Width), SepalWidth_StdDev=sd(Sepal.Width),
